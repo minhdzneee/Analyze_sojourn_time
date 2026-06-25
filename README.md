@@ -33,7 +33,6 @@ The main experiment is to evaluate whether a flow assigned to a higher-priority 
 ├── deploy_cls.sh
 ├── pi_deploy_cls_ifb.sh
 ├── pi_deploy_cls.sh
-├── sojourn_stats_monitor.py
 └── test.sh
 ```
 
@@ -52,7 +51,6 @@ The main experiment is to evaluate whether a flow assigned to a higher-priority 
 | `pi_deploy_cls_ifb.sh` | Remote deployment script for the author's Pi/forwarding-node IFB + HTB + `prio` setup. |
 | `deploy_cls.sh` | Simple local deployment script for users who want to attach the eBPF programs directly to one Linux interface. |
 | `pi_deploy_cls.sh` | Older remote deployment script kept for reference. The current priority/backlog path uses `pi_deploy_cls_ifb.sh`. |
-| `sojourn_stats_monitor.py` | Experimental aggregate-stats reader. The main per-packet plotting path uses `sojourn_monitor.py`. |
 | `test.sh` | Example `iperf3` script for two parallel UDP flows. Edit IPs and bitrates before running. |
 
 ## How Sojourn Time Is Measured

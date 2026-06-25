@@ -57,16 +57,6 @@ struct {
     __uint(pinning, LIBBPF_PIN_BY_NAME);
 } sojourn_debug_map SEC(".maps");
 
-#if SOJOURN_EGRESS_STATS
-struct {
-    __uint(type, BPF_MAP_TYPE_PERCPU_HASH);
-    __uint(max_entries, SOJOURN_FLOW_MAP_MAX_ENTRIES);
-    __type(key, struct flow_count_key);
-    __type(value, struct sojourn_stats);
-    __uint(pinning, LIBBPF_PIN_BY_NAME);
-} sojourn_stats_map SEC(".maps");
-#endif
-
 static __always_inline void inc_debug_counter(__u32 key)
 {
     __u64 *cnt = bpf_map_lookup_elem(&sojourn_debug_map, &key);
@@ -85,68 +75,6 @@ static __always_inline void inc_egress_count(struct flow_count_key *key)
         bpf_map_update_elem(&egress_count_map, key, &init_val, BPF_ANY);
     }
 }
-
-#if SOJOURN_EGRESS_STATS
-static __always_inline __u32 sojourn_bucket_us(__u64 sojourn_ns)
-{
-    __u64 us = sojourn_ns / 1000;
-    __u32 bucket = 0;
-
-    if (us == 0)
-        return 0;
-
-#pragma unroll
-    for (int i = 0; i < SOJOURN_HIST_BUCKETS - 1; i++) {
-        if (us > 1) {
-            us >>= 1;
-            bucket++;
-        }
-    }
-
-    return bucket;
-}
-
-static __always_inline struct sojourn_stats *get_sojourn_stats(struct flow_count_key *key)
-{
-    struct sojourn_stats zero = {};
-    bpf_map_update_elem(&sojourn_stats_map, key, &zero, BPF_NOEXIST);
-    return bpf_map_lookup_elem(&sojourn_stats_map, key);
-}
-
-static __always_inline void record_sojourn_match(struct flow_count_key *key, __u64 sojourn_ns)
-{
-    struct sojourn_stats *stats = get_sojourn_stats(key);
-    if (!stats)
-        return;
-
-    stats->matched++;
-    stats->sum_ns += sojourn_ns;
-
-    if (stats->min_ns == 0 || sojourn_ns < stats->min_ns)
-        stats->min_ns = sojourn_ns;
-    if (sojourn_ns > stats->max_ns)
-        stats->max_ns = sojourn_ns;
-
-    __u32 bucket = sojourn_bucket_us(sojourn_ns);
-    if (bucket >= SOJOURN_HIST_BUCKETS)
-        bucket = SOJOURN_HIST_BUCKETS - 1;
-    stats->buckets[bucket]++;
-}
-
-static __always_inline void record_sojourn_miss(struct flow_count_key *key)
-{
-    struct sojourn_stats *stats = get_sojourn_stats(key);
-    if (stats)
-        stats->lookup_miss++;
-}
-
-static __always_inline void record_sojourn_nonpositive(struct flow_count_key *key)
-{
-    struct sojourn_stats *stats = get_sojourn_stats(key);
-    if (stats)
-        stats->nonpositive++;
-}
-#endif
 
 #endif
 
@@ -284,24 +212,13 @@ int check_egress_priority(struct __sk_buff *skb)
 
                 bpf_map_update_elem(&sojourn_sample_map, &pkt_key, &sample, BPF_ANY);
                 inc_debug_counter(SOJOURN_DBG_SAMPLE_UPDATE);
-#if SOJOURN_EGRESS_STATS
-                record_sojourn_match(&c_key, sojourn_ns);
-#endif
 
 #if SOJOURN_DELETE_INGRESS_TS_AFTER_MATCH
                 bpf_map_delete_elem(&ingress_ts_map, &pkt_key);
 #endif
             }
-#if SOJOURN_EGRESS_STATS
-            else {
-                record_sojourn_nonpositive(&c_key);
-            }
-#endif
         } else {
             inc_debug_counter(SOJOURN_DBG_INGRESS_TS_MISS);
-#if SOJOURN_EGRESS_STATS
-            record_sojourn_miss(&c_key);
-#endif
         }
     }
 #endif

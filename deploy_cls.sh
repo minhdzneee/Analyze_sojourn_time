@@ -25,7 +25,6 @@ sudo rm -f /sys/fs/bpf/tc/globals/ingress_count_map
 sudo rm -f /sys/fs/bpf/tc/globals/egress_count_map
 sudo rm -f /sys/fs/bpf/tc/globals/udp_seq_map
 sudo rm -f /sys/fs/bpf/tc/globals/sojourn_sample_map
-sudo rm -f /sys/fs/bpf/tc/globals/sojourn_stats_map
 
 echo "[+] Flushing old trace logs..."
 sudo bash -c 'echo > /sys/kernel/debug/tracing/trace'

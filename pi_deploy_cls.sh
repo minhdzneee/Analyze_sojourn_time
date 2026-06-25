@@ -51,7 +51,6 @@ rm -f /sys/fs/bpf/tc/globals/ingress_count_map
 rm -f /sys/fs/bpf/tc/globals/egress_count_map
 rm -f /sys/fs/bpf/tc/globals/udp_seq_map
 rm -f /sys/fs/bpf/tc/globals/sojourn_sample_map
-rm -f /sys/fs/bpf/tc/globals/sojourn_stats_map
 
 printf "\n[+] Flushing old trace logs...\n"
 ash -c 'echo > /sys/kernel/debug/tracing/trace' 2>/dev/null || true

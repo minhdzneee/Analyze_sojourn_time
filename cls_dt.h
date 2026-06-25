@@ -13,15 +13,8 @@
 #define SOJOURN_TS_MAP_MAX_ENTRIES 65536
 #define SOJOURN_FLOW_MAP_MAX_ENTRIES 8192
 
-// Optional aggregate stats. Keep this off for the packet-sample path because
-// the histogram value is large and can push older BPF toolchains over the
-// 512-byte stack limit.
-#define SOJOURN_EGRESS_STATS 0
-#define SOJOURN_HIST_BUCKETS 32
-
-// Keep egress_ts_map updates for the old Python packet matcher. Set to 0 if
-// you only use sojourn_stats_map and want less per-packet overhead.
-// The current monitor reads sojourn_sample_map, so this can stay off.
+// Keep egress_ts_map updates for the old Python packet matcher. The current
+// monitor reads sojourn_sample_map, so this can stay off.
 #define SOJOURN_STORE_EGRESS_TS 0
 #define SOJOURN_DELETE_INGRESS_TS_AFTER_MATCH 1
 
@@ -95,21 +88,6 @@ struct flow_count_key {
     __u16 dst_port;
     __u8 protocol;      // 6 for TCP, 17 for UDP
     __u8 _pad[3];       // Align key size to 16 bytes
-};
-
-/*
- * Per-flow sojourn stats. With BPF_MAP_TYPE_PERCPU_HASH, each CPU has one
- * copy of this value; user-space must sum matched/lookup_miss/sum/buckets and
- * take min(min_ns)/max(max_ns) across CPUs.
- */
-struct sojourn_stats {
-    __u64 matched;
-    __u64 lookup_miss;
-    __u64 nonpositive;
-    __u64 sum_ns;
-    __u64 min_ns;
-    __u64 max_ns;
-    __u64 buckets[SOJOURN_HIST_BUCKETS];
 };
 
 /*

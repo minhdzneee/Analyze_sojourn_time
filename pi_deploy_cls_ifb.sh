@@ -73,7 +73,6 @@ rm -f /sys/fs/bpf/tc/globals/ingress_count_map
 rm -f /sys/fs/bpf/tc/globals/egress_count_map
 rm -f /sys/fs/bpf/tc/globals/udp_seq_map
 rm -f /sys/fs/bpf/tc/globals/sojourn_sample_map
-rm -f /sys/fs/bpf/tc/globals/sojourn_stats_map
 rm -f /sys/fs/bpf/tc/globals/sojourn_debug_map
 rm -f /sys/fs/bpf/tc/globals/ifb_ifindex_map
 
