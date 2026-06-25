@@ -1,0 +1,24 @@
+# Build artifacts
+*.o
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# macOS metadata
+.DS_Store
+
+# Experiment logs and generated analysis outputs
+output_*/
+20[0-9][0-9]_[0-9][0-9]_[0-9][0-9]/
+20[0-9][0-9]_[0-9][0-9]_[0-9][0-9]_*.csv
+check_backlog_*.txt
+*_check_backlog_*.csv
+*_cls_*.csv
+*_no_cls_*.csv
+*_cls_htb_*.csv
+
+# Packet captures / ad-hoc logs
+*.pcap
+*.pcapng
+*.log

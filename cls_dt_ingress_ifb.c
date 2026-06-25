@@ -81,6 +81,17 @@ static __always_inline __u32 next_udp_seq(struct flow_count_key *key)
 
 #endif
 
+// IFB redirect target. User-space deploy script writes ifb0 ifindex here.
+// The ingress program uses this after setting skb->priority so packets pass
+// through ifb0 root prio qdisc before continuing to the normal stack.
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u32);
+    __uint(pinning, LIBBPF_PIN_BY_NAME);
+} ifb_ifindex_map SEC(".maps");
+
 // eBPF Map to store the timestamp of the last processed packet for IAT calculation
 struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
@@ -290,6 +301,22 @@ int classify_flow(struct __sk_buff *skb)
 #endif
     }
 
+    // 6. Redirect to IFB so the packet goes through ifb0 root prio qdisc.
+    // The deploy script writes ifb0 ifindex into ifb_ifindex_map[0].
+    __u32 ifb_key = 0;
+    __u32 *ifb_ifindex = bpf_map_lookup_elem(&ifb_ifindex_map, &ifb_key);
+    if (ifb_ifindex && *ifb_ifindex) {
+#if DEBUG_PRINT
+        char ifb_fmt[] = "[INNN] Redirecting packet to IFB ifindex=%u\n";
+        bpf_trace_printk(ifb_fmt, sizeof(ifb_fmt), *ifb_ifindex);
+#endif
+        return bpf_redirect(*ifb_ifindex, 0);
+    }
+
+#if DEBUG_PRINT
+    char no_ifb_fmt[] = "[INNN] IFB ifindex not set, packet continues normally\n";
+    bpf_trace_printk(no_ifb_fmt, sizeof(no_ifb_fmt));
+#endif
     return TC_ACT_OK;
 }
 
